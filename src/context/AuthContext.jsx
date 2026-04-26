@@ -3,30 +3,47 @@ import {
   login as loginService,
   register as registerService,
   logout as logoutService,
-  isAuthenticated,
-  getStoredUser,
+  getMe,
 } from '../services/authService';
+
+const TOKEN_KEY = 'corretora_token';
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(getStoredUser);
-  const [token, setToken] = useState(() => localStorage.getItem('corretora_token'));
+  const [user, setUser] = useState(null);
+  const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY));
   const [loading, setLoading] = useState(false);
+  const [initializing, setInitializing] = useState(true);
 
   useEffect(() => {
-    if (!isAuthenticated()) {
-      setUser(null);
-      setToken(null);
+    const stored = localStorage.getItem(TOKEN_KEY);
+    if (!stored) {
+      setInitializing(false);
+      return;
     }
+
+    getMe()
+      .then((me) => {
+        setUser({ name: me.name, email: me.email, role: me.role });
+        setToken(stored);
+      })
+      .catch(() => {
+        localStorage.removeItem(TOKEN_KEY);
+        localStorage.removeItem('corretora_user');
+        setUser(null);
+        setToken(null);
+      })
+      .finally(() => setInitializing(false));
   }, []);
 
   const login = useCallback(async (email, password) => {
     setLoading(true);
     try {
       const data = await loginService(email, password);
+      const me = await getMe();
       setToken(data.token);
-      setUser({ name: data.name, email: data.email, role: data.role });
+      setUser({ name: me.name, email: me.email, role: me.role });
       return data;
     } finally {
       setLoading(false);
@@ -37,8 +54,9 @@ export function AuthProvider({ children }) {
     setLoading(true);
     try {
       const data = await registerService(name, email, password);
+      const me = await getMe();
       setToken(data.token);
-      setUser({ name: data.name, email: data.email, role: data.role });
+      setUser({ name: me.name, email: me.email, role: me.role });
       return data;
     } finally {
       setLoading(false);
@@ -50,6 +68,8 @@ export function AuthProvider({ children }) {
     setUser(null);
     setToken(null);
   }, []);
+
+  if (initializing) return null;
 
   return (
     <AuthContext.Provider value={{ user, token, loading, login, register, logout }}>

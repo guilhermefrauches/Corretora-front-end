@@ -37,3 +37,8 @@ export function getStoredUser() {
     return null;
   }
 }
+
+export async function getMe() {
+  const { data } = await api.get('/api/auth/me');
+  return data;
+}
