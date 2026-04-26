@@ -5,7 +5,7 @@ function fmt(value) {
   return value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-export default function SummaryCards({ summary, walletVersion = 0 }) {
+export default function SummaryCards({ summary, walletVersion = 0, walletData = null }) {
   const { dailyChange, dailyChangePct, monthReturn, cdiMonth, ibovMonth, accumulatedReturn, accumulatedReturnPct } = summary;
 
   const [balance, setBalance] = useState(null);
@@ -13,6 +13,13 @@ export default function SummaryCards({ summary, walletVersion = 0 }) {
   const [balanceError, setBalanceError] = useState(false);
 
   useEffect(() => {
+    if (walletData?.balance !== undefined) {
+      setBalance(walletData.balance);
+      setLoadingBalance(false);
+      setBalanceError(false);
+      return;
+    }
+
     let cancelled = false;
     setLoadingBalance(true);
     setBalanceError(false);
@@ -29,7 +36,7 @@ export default function SummaryCards({ summary, walletVersion = 0 }) {
       });
 
     return () => { cancelled = true; };
-  }, [walletVersion]);
+  }, [walletVersion, walletData]);
 
   const balanceDisplay = loadingBalance
     ? '...'

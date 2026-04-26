@@ -19,11 +19,20 @@ import { portfolioSummary } from './data/mockData';
 
 function OverviewPage() {
   const [walletVersion, setWalletVersion] = useState(0);
+  const [walletData, setWalletData] = useState(null);
+
+  function handleWalletUpdate(wallet) {
+    if (wallet?.balance !== undefined) {
+      setWalletData(wallet);
+    } else {
+      setWalletVersion((v) => v + 1);
+    }
+  }
 
   return (
     <>
-      <SummaryCards summary={portfolioSummary} walletVersion={walletVersion} />
-      <QuickActions onWalletUpdate={() => setWalletVersion((v) => v + 1)} />
+      <SummaryCards summary={portfolioSummary} walletVersion={walletVersion} walletData={walletData} />
+      <QuickActions onWalletUpdate={handleWalletUpdate} />
       <div style={styles.midRow}>
         <PerformanceChart />
         <AllocationDonut />

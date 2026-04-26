@@ -22,3 +22,8 @@ export async function createPaymentIntent(amount) {
   });
   return data;
 }
+
+export async function confirmDeposit(paymentIntentId) {
+  const { data } = await api.post('/api/wallet/confirm-deposit', { paymentIntentId });
+  return data;
+}
