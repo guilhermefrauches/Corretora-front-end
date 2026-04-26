@@ -45,7 +45,10 @@ export default function Sidebar({ activePage, onNavigate, onLogout, userRole }) 
 
       <div style={{ flex: 1 }} />
 
-      <div style={styles.navItem}>
+      <div
+        style={{ ...styles.navItem, ...(activePage === 'configuracoes' ? styles.navItemActive : {}) }}
+        onClick={() => onNavigate('configuracoes')}
+      >
         <Settings size={16} style={styles.navIcon} />
         Configurações
       </div>

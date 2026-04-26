@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getWallet } from '../../services/walletService';
+import { usePrefs } from '../../context/PrefsContext';
 
 function fmt(value) {
   return value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -7,6 +8,8 @@ function fmt(value) {
 
 export default function SummaryCards({ summary, walletVersion = 0, walletData = null }) {
   const { dailyChange, dailyChangePct, monthReturn, cdiMonth, ibovMonth, accumulatedReturn, accumulatedReturnPct } = summary;
+  const { prefs } = usePrefs();
+  const hidden = prefs.hideBalance;
 
   const [balance, setBalance] = useState(null);
   const [loadingBalance, setLoadingBalance] = useState(true);
@@ -38,7 +41,9 @@ export default function SummaryCards({ summary, walletVersion = 0, walletData = 
     return () => { cancelled = true; };
   }, [walletVersion, walletData]);
 
-  const balanceDisplay = loadingBalance
+  const balanceDisplay = hidden
+    ? 'R$ ••••••'
+    : loadingBalance
     ? '...'
     : balanceError
     ? 'Indisponível'

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { PrefsProvider } from './context/PrefsContext';
 
 import Sidebar from './components/layout/Sidebar';
 import TopBar from './components/layout/TopBar';
@@ -14,6 +15,8 @@ import MercadoPage from './pages/MercadoPage';
 import HistoricoPage from './pages/HistoricoPage';
 import RelatoriosPage from './pages/RelatoriosPage';
 import AdminPage from './pages/AdminPage';
+import ConfiguracoesPage from './pages/ConfiguracoesPage';
+import PerfilPage from './pages/PerfilPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import { portfolioSummary } from './data/mockData';
@@ -45,12 +48,14 @@ function OverviewPage() {
 }
 
 const PAGES = {
-  overview:  <OverviewPage />,
-  carteira:  <CarteiraPage />,
-  mercado:   <MercadoPage />,
-  historico: <HistoricoPage />,
-  relatorios: <RelatoriosPage />,
-  admin:     <AdminPage />,
+  overview:      <OverviewPage />,
+  carteira:      <CarteiraPage />,
+  mercado:       <MercadoPage />,
+  historico:     <HistoricoPage />,
+  relatorios:    <RelatoriosPage />,
+  admin:         <AdminPage />,
+  configuracoes: <ConfiguracoesPage />,
+  perfil:        <PerfilPage />,
 };
 
 function Dashboard({ initialPage = 'overview' }) {
@@ -61,7 +66,7 @@ function Dashboard({ initialPage = 'overview' }) {
     <div style={styles.app}>
       <Sidebar activePage={activePage} onNavigate={setActivePage} onLogout={logout} userRole={user?.role} />
       <main style={styles.main}>
-        <TopBar userName={user?.name ?? 'Usuário'} />
+        <TopBar onNavigate={setActivePage} />
         {PAGES[activePage] ?? PAGES.overview}
       </main>
     </div>
@@ -107,7 +112,9 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <AppRoutes />
+        <PrefsProvider>
+          <AppRoutes />
+        </PrefsProvider>
       </AuthProvider>
     </BrowserRouter>
   );
