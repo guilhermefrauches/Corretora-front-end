@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, Wallet, TrendingUp, History, FileText, Settings, LogOut } from 'lucide-react';
+import { LayoutDashboard, Wallet, TrendingUp, History, FileText, Settings, LogOut, ShieldCheck } from 'lucide-react';
 
 const NAV_ITEMS = [
   { icon: LayoutDashboard, label: 'Visão geral',  page: 'overview' },
@@ -9,7 +9,7 @@ const NAV_ITEMS = [
   { icon: FileText,        label: 'Relatórios',   page: 'relatorios' },
 ];
 
-export default function Sidebar({ activePage, onNavigate, onLogout }) {
+export default function Sidebar({ activePage, onNavigate, onLogout, userRole }) {
   return (
     <aside style={styles.sidebar}>
       <div style={styles.logo}>
@@ -31,6 +31,16 @@ export default function Sidebar({ activePage, onNavigate, onLogout }) {
             </div>
           );
         })}
+
+        {userRole === 'ADMIN' && (
+          <div
+            style={{ ...styles.navItem, ...(activePage === 'admin' ? styles.navItemActive : {}), marginTop: 8, borderTop: '0.5px solid rgba(255,255,255,0.07)', paddingTop: 18 }}
+            onClick={() => onNavigate('admin')}
+          >
+            <ShieldCheck size={16} style={styles.navIcon} />
+            Admin
+          </div>
+        )}
       </nav>
 
       <div style={{ flex: 1 }} />
