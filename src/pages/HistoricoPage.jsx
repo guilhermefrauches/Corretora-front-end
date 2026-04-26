@@ -1,44 +1,103 @@
-import React from 'react';
-import { transactions } from '../data/mockData';
+import React, { useEffect, useState } from 'react';
+import { getWallet } from '../services/walletService';
 
 function fmt(value) {
-  return value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function fmtDate(dateStr) {
+  if (!dateStr) return '-';
+  const d = new Date(dateStr);
+  if (isNaN(d)) return dateStr;
+  return d.toLocaleDateString('pt-BR');
+}
+
+function typeLabel(type) {
+  if (!type) return '-';
+  const map = { DEPOSIT: 'Depósito', WITHDRAW: 'Saque', COMPRA: 'Compra', VENDA: 'Venda' };
+  return map[type.toUpperCase()] ?? type;
+}
+
+function isPositive(type) {
+  return ['DEPOSIT', 'COMPRA'].includes((type ?? '').toUpperCase());
 }
 
 export default function HistoricoPage() {
+  const [transactions, setTransactions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+
+    getWallet()
+      .then((wallet) => {
+        if (!cancelled) setTransactions(wallet.transactions ?? []);
+      })
+      .catch(() => {
+        if (!cancelled) setError('Não foi possível carregar o histórico.');
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => { cancelled = true; };
+  }, []);
+
   return (
     <div style={styles.wrap}>
       <div style={styles.pageTitle}>Histórico de Transações</div>
 
       <div style={styles.card}>
-        <table style={styles.table}>
-          <thead>
-            <tr>
-              {['Data', 'Tipo', 'Ticker', 'Ativo', 'Qtd', 'Preço', 'Total'].map((h) => (
-                <th key={h} style={styles.th}>{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {transactions.map((tx, i) => (
-              <tr key={i} style={styles.tr}>
-                <td style={{ ...styles.td, color: 'rgba(255,255,255,0.45)' }}>{tx.date}</td>
-                <td style={styles.td}>
-                  <span style={{ ...styles.badge, ...(tx.type === 'Compra' ? styles.badgeBuy : styles.badgeSell) }}>
-                    {tx.type}
-                  </span>
-                </td>
-                <td style={styles.tdTicker}>{tx.ticker}</td>
-                <td style={styles.td}>{tx.name}</td>
-                <td style={{ ...styles.td, textAlign: 'right' }}>{tx.qty}</td>
-                <td style={{ ...styles.td, textAlign: 'right' }}>R$ {fmt(tx.price)}</td>
-                <td style={{ ...styles.td, textAlign: 'right', fontWeight: 500, color: '#fff' }}>
-                  R$ {fmt(tx.total)}
-                </td>
+        {loading && <div style={styles.state}>Carregando...</div>}
+        {error && <div style={{ ...styles.state, color: '#f87171' }}>{error}</div>}
+
+        {!loading && !error && transactions.length === 0 && (
+          <div style={styles.state}>Nenhuma transação encontrada.</div>
+        )}
+
+        {!loading && !error && transactions.length > 0 && (
+          <table style={styles.table}>
+            <thead>
+              <tr>
+                {['Data', 'Tipo', 'Descrição', 'Valor'].map((h) => (
+                  <th key={h} style={styles.th}>{h}</th>
+                ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {transactions.map((tx, i) => (
+                <tr key={tx.id ?? i} style={styles.tr}>
+                  <td style={{ ...styles.td, color: 'rgba(255,255,255,0.45)' }}>
+                    {fmtDate(tx.date ?? tx.createdAt)}
+                  </td>
+                  <td style={styles.td}>
+                    <span
+                      style={{
+                        ...styles.badge,
+                        ...(isPositive(tx.type) ? styles.badgeBuy : styles.badgeSell),
+                      }}
+                    >
+                      {typeLabel(tx.type)}
+                    </span>
+                  </td>
+                  <td style={styles.td}>{tx.description ?? '-'}</td>
+                  <td
+                    style={{
+                      ...styles.td,
+                      textAlign: 'right',
+                      fontWeight: 500,
+                      color: isPositive(tx.type) ? '#4ade80' : '#f87171',
+                    }}
+                  >
+                    {isPositive(tx.type) ? '+' : '-'} R$ {fmt(Math.abs(tx.amount ?? tx.total ?? 0))}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );
@@ -54,6 +113,12 @@ const styles = {
     padding: 18,
     overflowX: 'auto',
   },
+  state: {
+    padding: '24px 0',
+    textAlign: 'center',
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.4)',
+  },
   table: { width: '100%', borderCollapse: 'collapse' },
   th: {
     textAlign: 'left',
@@ -65,13 +130,6 @@ const styles = {
   },
   tr: { borderTop: '0.5px solid rgba(255,255,255,0.06)' },
   td: { padding: '11px 12px', fontSize: 13, color: 'rgba(255,255,255,0.75)' },
-  tdTicker: {
-    padding: '11px 12px',
-    fontSize: 13,
-    fontWeight: 600,
-    color: '#fff',
-    fontFamily: 'monospace',
-  },
   badge: {
     display: 'inline-block',
     borderRadius: 6,
