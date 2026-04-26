@@ -26,6 +26,7 @@ function OverviewPage() {
     if (wallet?.balance !== undefined) {
       setWalletData(wallet);
     } else {
+      setWalletData(null);
       setWalletVersion((v) => v + 1);
     }
   }
