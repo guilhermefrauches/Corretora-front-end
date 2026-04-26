@@ -68,6 +68,11 @@ function Dashboard({ initialPage = 'overview' }) {
   );
 }
 
+function RootRedirect() {
+  const { token } = useAuth();
+  return <Navigate to={token ? '/dashboard' : '/login'} replace />;
+}
+
 function PrivateRoute({ children }) {
   const { token } = useAuth();
   return token ? children : <Navigate to="/login" replace />;
@@ -76,22 +81,24 @@ function PrivateRoute({ children }) {
 function AdminRoute({ children }) {
   const { token, user } = useAuth();
   if (!token) return <Navigate to="/login" replace />;
-  if (user?.role !== 'ADMIN') return <Navigate to="/" replace />;
+  if (user?.role !== 'ADMIN') return <Navigate to="/dashboard" replace />;
   return children;
 }
 
 function PublicRoute({ children }) {
   const { token } = useAuth();
-  return token ? <Navigate to="/" replace /> : children;
+  return token ? <Navigate to="/dashboard" replace /> : children;
 }
 
 function AppRoutes() {
   return (
     <Routes>
+      <Route path="/" element={<RootRedirect />} />
       <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
       <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
       <Route path="/admin" element={<AdminRoute><Dashboard initialPage="admin" /></AdminRoute>} />
-      <Route path="/*" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+      <Route path="/dashboard/*" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+      <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );
 }
