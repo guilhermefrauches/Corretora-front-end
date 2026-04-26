@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, Wallet, TrendingUp, History, FileText, Settings } from 'lucide-react';
+import { LayoutDashboard, Wallet, TrendingUp, History, FileText, Settings, LogOut } from 'lucide-react';
 
 const NAV_ITEMS = [
   { icon: LayoutDashboard, label: 'Visão geral',  page: 'overview' },
@@ -9,7 +9,7 @@ const NAV_ITEMS = [
   { icon: FileText,        label: 'Relatórios',   page: 'relatorios' },
 ];
 
-export default function Sidebar({ activePage, onNavigate }) {
+export default function Sidebar({ activePage, onNavigate, onLogout }) {
   return (
     <aside style={styles.sidebar}>
       <div style={styles.logo}>
@@ -39,6 +39,13 @@ export default function Sidebar({ activePage, onNavigate }) {
         <Settings size={16} style={styles.navIcon} />
         Configurações
       </div>
+
+      {onLogout && (
+        <div style={{ ...styles.navItem, color: '#f87171', marginTop: 4 }} onClick={onLogout}>
+          <LogOut size={16} style={styles.navIcon} />
+          Sair
+        </div>
+      )}
     </aside>
   );
 }
