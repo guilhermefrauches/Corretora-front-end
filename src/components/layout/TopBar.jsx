@@ -42,7 +42,7 @@ function ProfileDropdown({ onClose, onNavigate }) {
       {/* Header */}
       <div style={styles.ddHeader}>
         <div style={styles.ddAvatar}>{initials}</div>
-        <div>
+        <div style={{ flex: 1, minWidth: 0 }}>
           <div style={styles.ddName}>{user?.name ?? 'Usuário'}</div>
           <div style={styles.ddEmail}>{user?.email ?? ''}</div>
         </div>
@@ -224,7 +224,7 @@ const styles = {
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     fontSize: 13, fontWeight: 700, color: '#fff',
   },
-  ddName: { fontSize: 13, fontWeight: 600, color: '#fff', marginBottom: 2 },
+  ddName: { fontSize: 13, fontWeight: 600, color: '#fff' },
   ddEmail: { fontSize: 11, color: 'rgba(255,255,255,0.4)' },
   roleBadge: {
     position: 'absolute', top: 14, right: 14,

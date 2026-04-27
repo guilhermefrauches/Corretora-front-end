@@ -42,3 +42,13 @@ export async function getMe() {
   const { data } = await api.get('/api/auth/me');
   return data;
 }
+
+export async function updateMe({ name, email, currentPassword, newPassword }) {
+  const body = {};
+  if (name) body.name = name;
+  if (email) body.email = email;
+  if (currentPassword) body.currentPassword = currentPassword;
+  if (newPassword) body.newPassword = newPassword;
+  const { data } = await api.put('/api/auth/me', body);
+  return data;
+}

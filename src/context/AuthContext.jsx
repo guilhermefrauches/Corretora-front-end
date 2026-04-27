@@ -4,6 +4,7 @@ import {
   register as registerService,
   logout as logoutService,
   getMe,
+  updateMe as updateMeService,
 } from '../services/authService';
 
 const TOKEN_KEY = 'corretora_token';
@@ -69,10 +70,16 @@ export function AuthProvider({ children }) {
     setToken(null);
   }, []);
 
+  const updateProfile = useCallback(async (payload) => {
+    const data = await updateMeService(payload);
+    setUser({ name: data.name, email: data.email, role: data.role });
+    return data;
+  }, []);
+
   if (initializing) return null;
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, token, loading, login, register, logout, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );
