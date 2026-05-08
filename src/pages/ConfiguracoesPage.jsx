@@ -126,7 +126,7 @@ export default function ConfiguracoesPage() {
       return;
     }
     if (newPassword.length < 6) {
-      setPassStatus({ type: 'error', msg: 'A nova senha deve ter pelo menos 6 caracteres.' });
+      setPassStatus({ type: 'error', msg: 'A nova senha deve ter pelo menos 8 caracteres.' });
       return;
     }
 

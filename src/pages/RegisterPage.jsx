@@ -32,7 +32,7 @@ export default function RegisterPage() {
     e.preventDefault();
     setError('');
     if (!form.name || !form.email || !form.password) { setError('Preencha todos os campos.'); return; }
-    if (form.password.length < 6) { setError('A senha deve ter pelo menos 6 caracteres.'); return; }
+    if (form.password.length < 6) { setError('A senha deve ter pelo menos 8 caracteres.'); return; }
     if (form.password !== form.confirmPassword) { setError('As senhas não coincidem.'); return; }
     try {
       await register(form.name, form.email, form.password);
@@ -111,7 +111,7 @@ export default function RegisterPage() {
                   <input
                     style={styles.input}
                     type="password" name="password"
-                    placeholder="Mín. 6 caracteres"
+                    placeholder="Mín. 8 caracteres"
                     value={form.password} onChange={handleChange}
                     autoComplete="new-password"
                   />

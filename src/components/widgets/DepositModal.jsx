@@ -63,10 +63,13 @@ function CardForm({ clientSecret, paymentIntentId, parsedAmount, intentReady, on
   const stripe = useStripe();
   const elements = useElements();
   const [status, setStatus] = useState('idle');
+  const [cardReady, setCardReady] = useState(false);
+
+  const isIdle = status === 'idle';
 
   async function handleSubmit(e) {
     e.preventDefault();
-    if (!stripe || !elements || !intentReady || parsedAmount <= 0) return;
+    if (!stripe || !elements || !intentReady || !cardReady || parsedAmount <= 0) return;
 
     setStatus('processing');
     onError('');
@@ -98,114 +101,107 @@ function CardForm({ clientSecret, paymentIntentId, parsedAmount, intentReady, on
     }
   }
 
-  if (status === 'processing' || status === 'crediting') {
-    return (
-      <div style={styles.stateWrap}>
-        <Spinner size={32} color="#a78bfa" />
-        <div style={styles.stateText}>
-          {status === 'processing' ? 'Confirmando pagamento...' : 'Creditando saldo...'}
-        </div>
-      </div>
-    );
-  }
-
-  if (status === 'success') {
-    return (
-      <div style={styles.stateWrap}>
-        <CheckCircle size={44} color="#4ade80" />
-        <div style={{ ...styles.stateText, color: '#4ade80' }}>Depósito confirmado!</div>
-      </div>
-    );
-  }
-
-  if (status === 'failed') {
-    return (
-      <div style={styles.stateWrap}>
-        <XCircle size={44} color="#f87171" />
-        <div style={{ ...styles.stateText, color: '#f87171' }}>Falha na confirmação</div>
-        <div style={styles.stateSubText}>
-          O pagamento foi processado, mas o servidor não confirmou o crédito.
-        </div>
-      </div>
-    );
-  }
-
   const amountFormatted = parsedAmount > 0
     ? `R$ ${parsedAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
     : '—';
 
-  const canPay = stripe && intentReady && parsedAmount > 0;
+  const canPay = stripe && intentReady && cardReady && parsedAmount > 0;
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-      {/* Card visual with embedded Stripe elements */}
-      <div style={styles.cardVisual}>
-        {/* Chip */}
-        <div style={styles.cardChip}>
-          <div style={styles.chipLine} />
-          <div style={styles.chipLine} />
-        </div>
+    <>
+      {/* Form is hidden (not unmounted) during processing so Stripe iframes stay alive */}
+      <form onSubmit={handleSubmit} style={{ display: isIdle ? 'flex' : 'none', flexDirection: 'column', gap: 14 }}>
+        <div style={styles.cardVisual}>
+          <div style={styles.cardChip}>
+            <div style={styles.chipLine} />
+            <div style={styles.chipLine} />
+          </div>
 
-        {/* Card number element */}
-        <div style={styles.cardNumberWrap}>
-          <CardNumberElement options={NUM_STYLE} />
-        </div>
+          <div style={styles.cardNumberWrap}>
+            <CardNumberElement options={NUM_STYLE} onReady={() => setCardReady(true)} />
+          </div>
 
-        {/* Footer: expiry + cvc + value */}
-        <div style={styles.cardFooter}>
-          <div style={styles.cardField}>
-            <div style={styles.cardMeta}>VÁLIDO ATÉ</div>
-            <div style={styles.cardFieldEl}>
-              <CardExpiryElement options={SMALL_STYLE} />
+          <div style={styles.cardFooter}>
+            <div style={styles.cardField}>
+              <div style={styles.cardMeta}>VÁLIDO ATÉ</div>
+              <div style={styles.cardFieldEl}>
+                <CardExpiryElement options={SMALL_STYLE} />
+              </div>
+            </div>
+            <div style={styles.cardField}>
+              <div style={styles.cardMeta}>CVC</div>
+              <div style={styles.cardFieldEl}>
+                <CardCvcElement options={SMALL_STYLE} />
+              </div>
+            </div>
+            <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
+              <div style={styles.cardMeta}>VALOR</div>
+              <div style={{
+                ...styles.cardAmount,
+                color: parsedAmount > 0 ? '#fff' : 'rgba(255,255,255,0.3)',
+                fontSize: parsedAmount > 0 ? 16 : 14,
+              }}>
+                {amountFormatted}
+              </div>
             </div>
           </div>
-          <div style={styles.cardField}>
-            <div style={styles.cardMeta}>CVC</div>
-            <div style={styles.cardFieldEl}>
-              <CardCvcElement options={SMALL_STYLE} />
+
+          <div style={styles.cardShine} />
+          <div style={styles.cardGlow} />
+
+          {!intentReady && (
+            <div style={styles.cardOverlay}>
+              <Spinner size={22} color="rgba(255,255,255,0.7)" />
+              <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginLeft: 8 }}>
+                {parsedAmount > 0 ? 'Preparando...' : 'Informe o valor'}
+              </span>
             </div>
-          </div>
-          <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
-            <div style={styles.cardMeta}>VALOR</div>
-            <div style={{
-              ...styles.cardAmount,
-              color: parsedAmount > 0 ? '#fff' : 'rgba(255,255,255,0.3)',
-              fontSize: parsedAmount > 0 ? 16 : 14,
-            }}>
-              {amountFormatted}
-            </div>
-          </div>
+          )}
         </div>
 
-        {/* Decorative glows */}
-        <div style={styles.cardShine} />
-        <div style={styles.cardGlow} />
+        <div style={styles.hint}>Teste: 4242 4242 4242 4242 · MM/AA futuro · CVC qualquer</div>
 
-        {/* Overlay when intent is loading */}
-        {!intentReady && (
-          <div style={styles.cardOverlay}>
-            <Spinner size={22} color="rgba(255,255,255,0.7)" />
-            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginLeft: 8 }}>
-              {parsedAmount > 0 ? 'Preparando...' : 'Informe o valor'}
-            </span>
-          </div>
-        )}
-      </div>
+        <button
+          style={{ ...styles.btn, opacity: canPay ? 1 : 0.45 }}
+          type="submit"
+          disabled={!canPay}
+        >
+          {!intentReady && parsedAmount > 0
+            ? 'Preparando pagamento...'
+            : parsedAmount > 0
+              ? `Pagar ${amountFormatted}`
+              : 'Informe o valor acima'}
+        </button>
+      </form>
 
-      <div style={styles.hint}>Teste: 4242 4242 4242 4242 · MM/AA futuro · CVC qualquer</div>
-
-      <button
-        style={{ ...styles.btn, opacity: canPay ? 1 : 0.45 }}
-        type="submit"
-        disabled={!canPay}
-      >
-        {!intentReady && parsedAmount > 0
-          ? 'Preparando pagamento...'
-          : parsedAmount > 0
-            ? `Pagar ${amountFormatted}`
-            : 'Informe o valor acima'}
-      </button>
-    </form>
+      {!isIdle && (
+        <div style={styles.stateWrap}>
+          {(status === 'processing' || status === 'crediting') && (
+            <>
+              <Spinner size={32} color="#a78bfa" />
+              <div style={styles.stateText}>
+                {status === 'processing' ? 'Confirmando pagamento...' : 'Creditando saldo...'}
+              </div>
+            </>
+          )}
+          {status === 'success' && (
+            <>
+              <CheckCircle size={44} color="#4ade80" />
+              <div style={{ ...styles.stateText, color: '#4ade80' }}>Depósito confirmado!</div>
+            </>
+          )}
+          {status === 'failed' && (
+            <>
+              <XCircle size={44} color="#f87171" />
+              <div style={{ ...styles.stateText, color: '#f87171' }}>Falha na confirmação</div>
+              <div style={styles.stateSubText}>
+                O pagamento foi processado, mas o servidor não confirmou o crédito.
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </>
   );
 }
 
