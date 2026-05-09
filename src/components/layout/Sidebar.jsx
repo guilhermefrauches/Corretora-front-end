@@ -13,7 +13,7 @@ export default function Sidebar({ activePage, onNavigate, onLogout, userRole }) 
   return (
     <aside style={styles.sidebar}>
       <div style={styles.logo}>
-        <div style={styles.logoIcon}>C</div>
+        <img src={`/logo.svg?v=${Date.now()}`} alt="CarteiraInvest" style={styles.logoIcon} />
         CarteiraInvest
       </div>
 
@@ -86,15 +86,11 @@ const styles = {
     gap: 8,
   },
   logoIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
-    background: '#6c63ff',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: 14,
-    color: '#fff',
+    width: 48,
+    height: 48,
+    objectFit: 'contain',
+    filter: 'brightness(0) invert(1)',
+    transform: 'scaleX(0.84)',
   },
   nav: {
     display: 'flex',
