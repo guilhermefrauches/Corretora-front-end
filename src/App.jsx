@@ -19,11 +19,11 @@ import ConfiguracoesPage from './pages/ConfiguracoesPage';
 import PerfilPage from './pages/PerfilPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
-import { portfolioSummary } from './data/mockData';
 
 function OverviewPage() {
   const [walletVersion, setWalletVersion] = useState(0);
   const [walletData, setWalletData] = useState(null);
+  const [portfolioVersion, setPortfolioVersion] = useState(0);
 
   function handleWalletUpdate(wallet) {
     if (wallet?.balance !== undefined) {
@@ -34,40 +34,56 @@ function OverviewPage() {
     }
   }
 
+  function handleSellSuccess(wallet) {
+    setPortfolioVersion(v => v + 1);
+    if (wallet?.balance !== undefined) {
+      setWalletData(wallet);
+    } else {
+      setWalletVersion(v => v + 1);
+    }
+  }
+
   return (
     <>
-      <SummaryCards summary={portfolioSummary} walletVersion={walletVersion} walletData={walletData} />
-      <QuickActions onWalletUpdate={handleWalletUpdate} />
+      <SummaryCards
+        walletVersion={walletVersion}
+        walletData={walletData}
+        portfolioVersion={portfolioVersion}
+      />
+      <QuickActions
+        onWalletUpdate={handleWalletUpdate}
+        onPortfolioRefresh={() => setPortfolioVersion(v => v + 1)}
+      />
       <div style={styles.midRow}>
         <PerformanceChart />
-        <AllocationDonut />
+        <AllocationDonut portfolioVersion={portfolioVersion} />
       </div>
-      <AssetsTable />
+      <AssetsTable portfolioVersion={portfolioVersion} onSellSuccess={handleSellSuccess} />
     </>
   );
 }
 
-const PAGES = {
-  overview:      <OverviewPage />,
-  carteira:      <CarteiraPage />,
-  mercado:       <MercadoPage />,
-  historico:     <HistoricoPage />,
-  relatorios:    <RelatoriosPage />,
-  admin:         <AdminPage />,
-  configuracoes: <ConfiguracoesPage />,
-  perfil:        <PerfilPage />,
-};
-
 function Dashboard({ initialPage = 'overview' }) {
   const [activePage, setActivePage] = useState(initialPage);
   const { user, logout } = useAuth();
+
+  const pages = {
+    overview:      <OverviewPage />,
+    carteira:      <CarteiraPage />,
+    mercado:       <MercadoPage />,
+    historico:     <HistoricoPage />,
+    relatorios:    <RelatoriosPage />,
+    admin:         <AdminPage />,
+    configuracoes: <ConfiguracoesPage />,
+    perfil:        <PerfilPage />,
+  };
 
   return (
     <div style={styles.app}>
       <Sidebar activePage={activePage} onNavigate={setActivePage} onLogout={logout} userRole={user?.role} />
       <main style={styles.main}>
         <TopBar onNavigate={setActivePage} />
-        {PAGES[activePage] ?? PAGES.overview}
+        {pages[activePage] ?? pages.overview}
       </main>
     </div>
   );

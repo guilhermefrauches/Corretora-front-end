@@ -300,7 +300,10 @@ export default function DepositModal({ onClose, onSuccess }) {
     <div style={styles.overlay} onClick={onClose}>
       <div style={styles.modal} onClick={e => e.stopPropagation()}>
         <div style={styles.header}>
-          <span style={styles.title}>Depositar</span>
+          <div>
+            <div style={styles.title}>Depositar</div>
+            <div style={styles.titleSub}>Valor creditado no saldo disponível para investir</div>
+          </div>
           <button style={styles.closeBtn} onClick={onClose}><X size={16} /></button>
         </div>
 
@@ -355,6 +358,7 @@ const styles = {
   },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 },
   title: { fontSize: 16, fontWeight: 700, color: '#fff', letterSpacing: '-0.2px' },
+  titleSub: { fontSize: 11, color: 'rgba(255,255,255,0.35)', marginTop: 3 },
   closeBtn: {
     background: 'rgba(255,255,255,0.06)', border: '0.5px solid rgba(255,255,255,0.1)',
     color: 'rgba(255,255,255,0.5)', cursor: 'pointer', padding: 6, display: 'flex',

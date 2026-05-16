@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, ArrowUp, TrendingUp, TrendingDown, X, Landmark, CheckCircle } from 'lucide-react';
-import { withdraw } from '../../services/walletService';
+import { withdraw, getWallet } from '../../services/walletService';
 import DepositModal from './DepositModal';
+import QuickBuyModal from './QuickBuyModal';
+import QuickSellModal from './QuickSellModal';
 
 function formatBRL(digits) {
   if (!digits) return '';
@@ -11,12 +13,21 @@ function formatBRL(digits) {
   });
 }
 
+function fmtBRL(v) {
+  return Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
 function WithdrawModal({ onClose, onSuccess }) {
   const [digits, setDigits] = useState('');
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
+  const [availableBalance, setAvailableBalance] = useState(null);
+
+  useEffect(() => {
+    getWallet().then(w => setAvailableBalance(w.balance ?? 0)).catch(() => {});
+  }, []);
 
   const parsed = digits ? parseInt(digits, 10) / 100 : 0;
 
@@ -29,6 +40,10 @@ function WithdrawModal({ onClose, onSuccess }) {
   async function handleSubmit(e) {
     e.preventDefault();
     if (!parsed || parsed <= 0) { setError('Informe um valor válido.'); return; }
+    if (availableBalance !== null && parsed > availableBalance) {
+      setError(`Saldo disponível insuficiente. Máximo: R$ ${fmtBRL(availableBalance)}`);
+      return;
+    }
 
     setLoading(true);
     setError('');
@@ -65,6 +80,12 @@ function WithdrawModal({ onClose, onSuccess }) {
                 <div style={wStyles.walletLabel}>Conta corrente</div>
                 <div style={wStyles.walletSub}>Transferência via saldo disponível</div>
               </div>
+              <div style={wStyles.balanceBadge}>
+                <div style={wStyles.balanceBadgeLabel}>Disponível</div>
+                <div style={wStyles.balanceBadgeValue}>
+                  {availableBalance === null ? '...' : `R$ ${fmtBRL(availableBalance)}`}
+                </div>
+              </div>
             </div>
 
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -82,6 +103,11 @@ function WithdrawModal({ onClose, onSuccess }) {
                     autoFocus
                   />
                 </div>
+              {availableBalance !== null && parsed > availableBalance && (
+                <div style={{ fontSize: 11, color: '#f87171', marginTop: 5 }}>
+                  Saldo disponível: R$ {fmtBRL(availableBalance)}
+                </div>
+              )}
               </div>
 
               <div>
@@ -113,7 +139,7 @@ function WithdrawModal({ onClose, onSuccess }) {
   );
 }
 
-export default function QuickActions({ onWalletUpdate }) {
+export default function QuickActions({ onWalletUpdate, onPortfolioRefresh }) {
   const [modal, setModal] = useState(null);
 
   return (
@@ -125,8 +151,12 @@ export default function QuickActions({ onWalletUpdate }) {
         <button style={styles.actionBtn} onClick={() => setModal('withdraw')}>
           <ArrowUp size={14} /> Sacar
         </button>
-        <button style={styles.actionBtn}><TrendingUp size={14} /> Comprar</button>
-        <button style={styles.actionBtn}><TrendingDown size={14} /> Vender</button>
+        <button style={styles.actionBtn} onClick={() => setModal('buy')}>
+          <TrendingUp size={14} /> Comprar
+        </button>
+        <button style={styles.actionBtn} onClick={() => setModal('sell')}>
+          <TrendingDown size={14} /> Vender
+        </button>
       </div>
 
       {modal === 'deposit' && (
@@ -140,6 +170,20 @@ export default function QuickActions({ onWalletUpdate }) {
         <WithdrawModal
           onClose={() => setModal(null)}
           onSuccess={(wallet) => onWalletUpdate?.(wallet)}
+        />
+      )}
+
+      {modal === 'buy' && (
+        <QuickBuyModal
+          onClose={() => setModal(null)}
+          onSuccess={(result) => { setModal(null); onWalletUpdate?.(result?.wallet); onPortfolioRefresh?.(); }}
+        />
+      )}
+
+      {modal === 'sell' && (
+        <QuickSellModal
+          onClose={() => setModal(null)}
+          onSuccess={(result) => { setModal(null); onWalletUpdate?.(result?.wallet); onPortfolioRefresh?.(); }}
         />
       )}
     </>
@@ -191,9 +235,12 @@ const wStyles = {
     border: '0.5px solid rgba(245,158,11,0.2)',
     borderRadius: 12, padding: '14px 16px', marginBottom: 20,
   },
-  walletInfo: { display: 'flex', flexDirection: 'column', gap: 2 },
+  walletInfo: { display: 'flex', flexDirection: 'column', gap: 2, flex: 1 },
   walletLabel: { fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.85)' },
   walletSub: { fontSize: 11, color: 'rgba(255,255,255,0.35)' },
+  balanceBadge: { display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1, flexShrink: 0 },
+  balanceBadgeLabel: { fontSize: 10, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.4px' },
+  balanceBadgeValue: { fontSize: 14, fontWeight: 700, color: '#4ade80' },
   label: {
     fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.4)',
     marginBottom: 8, letterSpacing: '0.5px', textTransform: 'uppercase',
