@@ -58,12 +58,6 @@ export default function MercadoPage() {
     setPage(1);
   }
 
-  function handleTabChange(e) {
-    setActiveTab(e.target.value);
-    setSearch('');
-    setPage(1);
-  }
-
   const showSearch = activeTab === 'stocks' || activeTab === 'fiis';
 
   return (
@@ -74,10 +68,17 @@ export default function MercadoPage() {
       {/* Card principal */}
       <div style={styles.card}>
         <div style={styles.cardHeader}>
-          <select style={styles.tabSelect} value={activeTab} onChange={handleTabChange}>
-            <option value="stocks">Ações</option>
-            <option value="fiis">FIIs</option>
-          </select>
+          <div style={styles.pillGroup}>
+            {[{ label: 'Ações', value: 'stocks' }, { label: 'FIIs', value: 'fiis' }].map(t => (
+              <button
+                key={t.value}
+                style={{ ...styles.pill, ...(activeTab === t.value ? styles.pillActive : {}) }}
+                onClick={() => { setActiveTab(t.value); setSearch(''); setPage(1); }}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
 
           {showSearch && (
             <div style={styles.searchWrap}>
@@ -175,18 +176,16 @@ const styles = {
     gap: 12,
     flexWrap: 'wrap',
   },
-  tabSelect: {
-    background: '#13152a',
-    border: '0.5px solid rgba(255,255,255,0.12)',
-    borderRadius: 8,
-    color: '#fff',
-    fontSize: 13,
-    fontWeight: 500,
-    fontFamily: 'inherit',
-    padding: '7px 32px 7px 12px',
-    cursor: 'pointer',
-    outline: 'none',
-    appearance: 'auto',
+  pillGroup: { display: 'flex', gap: 6 },
+  pill: {
+    padding: '6px 14px', borderRadius: 20,
+    background: 'rgba(255,255,255,0.05)', border: '0.5px solid rgba(255,255,255,0.1)',
+    color: 'rgba(255,255,255,0.5)', fontSize: 13, fontWeight: 500,
+    cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s',
+  },
+  pillActive: {
+    background: 'rgba(108,99,255,0.18)', borderColor: 'rgba(108,99,255,0.4)',
+    color: '#a78bfa',
   },
   searchWrap: {
     display: 'flex', alignItems: 'center', gap: 8,

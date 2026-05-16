@@ -53,7 +53,7 @@ export default function RegisterPage() {
         {/* Left panel */}
         <div style={styles.left}>
           <div style={styles.brand}>
-            <div style={styles.logoIcon}>C</div>
+            <img src={`/logo.svg?v=${Date.now()}`} alt="CarteiraInvest" style={styles.logoIcon} />
             <span style={styles.logoText}>CarteiraInvest</span>
           </div>
 
@@ -193,11 +193,10 @@ const styles = {
   },
   brand: { display: 'flex', alignItems: 'center', gap: 10 },
   logoIcon: {
-    width: 34, height: 34, borderRadius: 10,
-    background: 'linear-gradient(135deg, #6c63ff, #5c54e8)',
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    fontSize: 16, fontWeight: 800, color: '#fff',
-    boxShadow: '0 4px 16px rgba(108,99,255,0.4)',
+    width: 80, height: 80,
+    objectFit: 'contain',
+    filter: 'brightness(0) invert(1)',
+    transform: 'scaleX(0.84)',
   },
   logoText: { fontSize: 16, fontWeight: 600, color: '#fff' },
   leftContent: {
