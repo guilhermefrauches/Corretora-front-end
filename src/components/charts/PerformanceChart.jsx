@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
   CategoryScale, LinearScale, PointElement,
   LineElement, Filler, Tooltip,
 } from 'chart.js';
-import { performanceData } from '../../data/mockData';
+import { getPortfolioHistory } from '../../services/portfolioService';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip);
 
@@ -13,40 +13,46 @@ const PERIODS = ['1M', '3M', '6M', '1A', 'MAX'];
 
 export default function PerformanceChart() {
   const [period, setPeriod] = useState('3M');
-  const d = performanceData[period];
+  const [chartData, setChartData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError('');
+    getPortfolioHistory(period)
+      .then(d => { if (!cancelled) setChartData(d); })
+      .catch(() => { if (!cancelled) setError('Não foi possível carregar o histórico.'); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [period]);
+
+  const datasets = chartData ? [
+    {
+      label: 'Carteira',
+      data: chartData.carteira,
+      borderColor: '#6c63ff',
+      backgroundColor: 'rgba(108,99,255,0.08)',
+      borderWidth: 2,
+      pointRadius: 0,
+      tension: 0.4,
+      fill: true,
+    },
+    {
+      label: 'CDI',
+      data: chartData.cdi,
+      borderColor: '#4ade80',
+      borderWidth: 1.5,
+      pointRadius: 0,
+      tension: 0.4,
+      borderDash: [4, 3],
+    },
+  ] : [];
 
   const data = {
-    labels: d.labels,
-    datasets: [
-      {
-        label: 'Carteira',
-        data: d.carteira,
-        borderColor: '#6c63ff',
-        backgroundColor: 'rgba(108,99,255,0.08)',
-        borderWidth: 2,
-        pointRadius: 0,
-        tension: 0.4,
-        fill: true,
-      },
-      {
-        label: 'CDI',
-        data: d.cdi,
-        borderColor: '#4ade80',
-        borderWidth: 1.5,
-        pointRadius: 0,
-        tension: 0.4,
-        borderDash: [4, 3],
-      },
-      {
-        label: 'IBOVESPA',
-        data: d.ibov,
-        borderColor: '#f59e0b',
-        borderWidth: 1.5,
-        pointRadius: 0,
-        tension: 0.4,
-        borderDash: [4, 3],
-      },
-    ],
+    labels: chartData?.labels ?? [],
+    datasets,
   };
 
   const options = {
@@ -101,14 +107,17 @@ export default function PerformanceChart() {
       </div>
 
       <div style={{ position: 'relative', height: 190 }}>
-        <Line data={data} options={options} />
+        {loading && <div style={styles.state}>Carregando...</div>}
+        {!loading && error && <div style={{ ...styles.state, color: '#f87171' }}>{error}</div>}
+        {!loading && !error && chartData && (
+          <Line data={data} options={options} />
+        )}
       </div>
 
       <div style={styles.legend}>
         {[
           { label: 'Carteira', color: '#6c63ff' },
           { label: 'CDI', color: '#4ade80' },
-          { label: 'IBOVESPA', color: '#f59e0b' },
         ].map(({ label, color }) => (
           <span key={label} style={styles.legendItem}>
             <span style={{ ...styles.legendLine, background: color }} />
@@ -138,10 +147,7 @@ const styles = {
     fontWeight: 500,
     color: 'rgba(255,255,255,0.8)',
   },
-  periodBtns: {
-    display: 'flex',
-    gap: 4,
-  },
+  periodBtns: { display: 'flex', gap: 4 },
   periodBtn: {
     background: 'transparent',
     border: '0.5px solid rgba(255,255,255,0.12)',
@@ -158,22 +164,15 @@ const styles = {
     color: '#a78bfa',
     borderColor: '#6c63ff',
   },
-  legend: {
-    display: 'flex',
-    gap: 16,
-    marginTop: 12,
+  state: {
+    position: 'absolute', inset: 0,
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    fontSize: 13, color: 'rgba(255,255,255,0.4)',
   },
+  legend: { display: 'flex', gap: 16, marginTop: 12 },
   legendItem: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 5,
-    fontSize: 11,
-    color: 'rgba(255,255,255,0.5)',
+    display: 'flex', alignItems: 'center', gap: 5,
+    fontSize: 11, color: 'rgba(255,255,255,0.5)',
   },
-  legendLine: {
-    width: 10,
-    height: 3,
-    borderRadius: 2,
-    display: 'inline-block',
-  },
+  legendLine: { width: 10, height: 3, borderRadius: 2, display: 'inline-block' },
 };

@@ -1,17 +1,25 @@
-import React from 'react';
+import React, { useState } from 'react';
 import SummaryCards from '../components/widgets/SummaryCards';
 import AssetsTable from '../components/widgets/AssetsTable';
 import AllocationDonut from '../components/charts/AllocationDonut';
-import { portfolioSummary } from '../data/mockData';
 
 export default function CarteiraPage() {
+  const [version, setVersion] = useState(0);
+
+  function handleSellSuccess() {
+    setVersion(v => v + 1);
+  }
+
   return (
     <div style={styles.wrap}>
       <div style={styles.pageTitle}>Carteira</div>
-      <SummaryCards summary={portfolioSummary} />
+      <SummaryCards
+        walletVersion={version}
+        portfolioVersion={version}
+      />
       <div style={styles.midRow}>
-        <AssetsTable />
-        <AllocationDonut />
+        <AssetsTable portfolioVersion={version} onSellSuccess={handleSellSuccess} />
+        <AllocationDonut portfolioVersion={version} />
       </div>
     </div>
   );
