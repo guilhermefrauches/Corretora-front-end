@@ -12,12 +12,12 @@ function fmtDate(str) {
 }
 
 function typeLabel(type) {
-  const map = { DEPOSIT: 'Depósito', WITHDRAW: 'Saque' };
+  const map = { DEPOSIT: 'Depósito', WITHDRAW: 'Saque', BUY: 'Compra', COMPRA: 'Compra', SELL: 'Venda', VENDA: 'Venda' };
   return map[(type ?? '').toUpperCase()] ?? type;
 }
 
 function isPositive(type) {
-  return (type ?? '').toUpperCase() === 'DEPOSIT';
+  return ['DEPOSIT', 'BUY', 'COMPRA'].includes((type ?? '').toUpperCase());
 }
 
 export default function UserWalletModal({ user, onClose }) {

@@ -12,10 +12,10 @@ function fmtDate(d) {
   return isNaN(dt) ? '' : dt.toLocaleDateString('pt-BR');
 }
 function isPositive(type) {
-  return ['DEPOSIT', 'COMPRA'].includes((type ?? '').toUpperCase());
+  return ['DEPOSIT', 'BUY', 'COMPRA'].includes((type ?? '').toUpperCase());
 }
 function typeLabel(type) {
-  const map = { DEPOSIT: 'Depósito', WITHDRAW: 'Saque', COMPRA: 'Compra', VENDA: 'Venda' };
+  const map = { DEPOSIT: 'Depósito', WITHDRAW: 'Saque', BUY: 'Compra', COMPRA: 'Compra', SELL: 'Venda', VENDA: 'Venda' };
   return map[(type ?? '').toUpperCase()] ?? type ?? '-';
 }
 

@@ -1,17 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Search, ChevronLeft, ChevronRight } from 'lucide-react';
-import {
-  listStocks,
-  getQuote,
-  getInflation,
-  getPrimeRate,
-} from '../services/marketService';
-
-const INDICATOR_DEFAULTS = [
-  { label: 'IBOVESPA',   value: '—', change: null, positive: true },
-  { label: 'SELIC',      value: '—', change: null, positive: true },
-  { label: 'IPCA (mês)', value: '—', change: null, positive: true },
-];
+import { listStocks } from '../services/marketService';
 
 function fmt(value) {
   return Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -26,73 +15,17 @@ function fmtVolume(value) {
   return String(n);
 }
 
-function fmtPct(value) {
-  const n = Number(value);
-  const sign = n >= 0 ? '+' : '';
-  return sign + n.toFixed(2).replace('.', ',') + '%';
-}
-
 export default function MercadoPage() {
-  const [activeTab, setActiveTab]   = useState('stocks');
-  const [indicators, setIndicators] = useState(INDICATOR_DEFAULTS);
-
-  // stocks / fiis
-  const [stocks, setStocks]         = useState([]);
+  const [activeTab, setActiveTab] = useState('stocks');
+  const [stocks, setStocks]       = useState([]);
   const [loading, setLoading]       = useState(true);
   const [error, setError]           = useState('');
   const [search, setSearch]         = useState('');
   const [page, setPage]             = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  // indicadores — roda 1x no mount, atualiza silenciosamente
-  useEffect(() => {
-    let cancelled = false;
-    Promise.allSettled([
-      getQuote('^BVSP'),
-      getPrimeRate({ country: 'brazil', historical: false }),
-      getInflation({ country: 'brazil', historical: false }),
-    ]).then(([ibov, prime, inflation]) => {
-      if (cancelled) return;
-      const updated = [...INDICATOR_DEFAULTS];
 
-      if (ibov.status === 'fulfilled') {
-        const r = ibov.value?.results?.[0];
-        if (r) updated[0] = {
-          label: 'IBOVESPA',
-          value: Number(r.regularMarketPrice).toLocaleString('pt-BR', { maximumFractionDigits: 0 }),
-          change: fmtPct(r.regularMarketChangePercent),
-          positive: Number(r.regularMarketChangePercent) >= 0,
-        };
-      }
-
-      if (prime.status === 'fulfilled') {
-        const arr = prime.value?.['prime-rate'];
-        const last = arr?.[arr.length - 1];
-        if (last) updated[1] = {
-          label: 'SELIC',
-          value: Number(last.value).toFixed(2).replace('.', ',') + '%',
-          change: null,
-          positive: true,
-        };
-      }
-
-      if (inflation.status === 'fulfilled') {
-        const arr = inflation.value?.inflation;
-        const last = arr?.[arr.length - 1];
-        if (last) updated[2] = {
-          label: 'IPCA (mês)',
-          value: Number(last.value).toFixed(2).replace('.', ',') + '%',
-          change: null,
-          positive: Number(last.value) >= 0,
-        };
-      }
-
-      setIndicators(updated);
-    });
-    return () => { cancelled = true; };
-  }, []);
-
-  // stocks / fiis
+  // lista de ativos / FIIs
   useEffect(() => {
     if (activeTab !== 'stocks' && activeTab !== 'fiis') return;
     let cancelled = false;
@@ -134,25 +67,9 @@ export default function MercadoPage() {
   const showSearch = activeTab === 'stocks' || activeTab === 'fiis';
 
   return (
+    <>
     <div style={styles.wrap}>
       <div style={styles.pageTitle}>Mercado</div>
-
-      {/* Indicadores */}
-      <div style={styles.indicesGrid}>
-        {indicators.map((idx) => (
-          <div key={idx.label} style={styles.indexCard}>
-            <div style={styles.indexLabel}>{idx.label}</div>
-            <div style={styles.indexValue}>{idx.value}</div>
-            {idx.change != null ? (
-              <div style={{ ...styles.indexChange, color: idx.positive ? '#4ade80' : '#f87171' }}>
-                {idx.positive ? '▲' : '▼'} {idx.change}
-              </div>
-            ) : (
-              <div style={{ ...styles.indexChange, color: 'rgba(255,255,255,0.2)' }}>—</div>
-            )}
-          </div>
-        ))}
-      </div>
 
       {/* Card principal */}
       <div style={styles.card}>
@@ -175,7 +92,6 @@ export default function MercadoPage() {
           )}
         </div>
 
-        {/* Ações / FIIs */}
         {(activeTab === 'stocks' || activeTab === 'fiis') && (
           <>
             {loading && <div style={styles.state}>Carregando...</div>}
@@ -188,8 +104,8 @@ export default function MercadoPage() {
                 <table style={styles.table}>
                   <thead>
                     <tr>
-                      {['Ticker', 'Nome', 'Preço', 'Variação', 'Volume'].map(h => (
-                        <th key={h} style={styles.th}>{h}</th>
+                      {['Ticker', 'Nome', 'Preço', 'Variação', 'Volume'].map((h, i) => (
+                        <th key={i} style={styles.th}>{h}</th>
                       ))}
                     </tr>
                   </thead>
@@ -236,33 +152,15 @@ export default function MercadoPage() {
           </>
         )}
       </div>
+
     </div>
+    </>
   );
 }
 
 const styles = {
   wrap: { display: 'flex', flexDirection: 'column', gap: 20 },
   pageTitle: { fontSize: 18, fontWeight: 600, color: '#fff' },
-  indicesGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(3, 1fr)',
-    gap: 12,
-  },
-  indexCard: {
-    background: '#1a1d2e',
-    borderRadius: 12,
-    border: '0.5px solid rgba(255,255,255,0.07)',
-    padding: '16px 18px',
-  },
-  indexLabel: {
-    fontSize: 11,
-    color: 'rgba(255,255,255,0.4)',
-    textTransform: 'uppercase',
-    letterSpacing: '0.6px',
-    marginBottom: 8,
-  },
-  indexValue: { fontSize: 18, fontWeight: 500, color: '#fff', marginBottom: 4 },
-  indexChange: { fontSize: 12 },
   card: {
     background: '#1a1d2e',
     borderRadius: 12,

@@ -13,12 +13,16 @@ function fmtDate(dateStr) {
 }
 
 function typeLabel(type) {
-  const map = { DEPOSIT: 'Depósito', WITHDRAW: 'Saque', COMPRA: 'Compra', VENDA: 'Venda' };
+  const map = {
+    DEPOSIT: 'Depósito', WITHDRAW: 'Saque',
+    BUY: 'Compra', COMPRA: 'Compra',
+    SELL: 'Venda', VENDA: 'Venda',
+  };
   return map[(type ?? '').toUpperCase()] ?? type ?? '-';
 }
 
 function isPositive(type) {
-  return ['DEPOSIT', 'COMPRA'].includes((type ?? '').toUpperCase());
+  return ['DEPOSIT', 'BUY', 'COMPRA'].includes((type ?? '').toUpperCase());
 }
 
 function exportCSV(transactions) {
@@ -40,11 +44,11 @@ function exportCSV(transactions) {
 }
 
 const TYPE_FILTERS = [
-  { label: 'Todos', value: 'all' },
-  { label: 'Depósito', value: 'DEPOSIT' },
-  { label: 'Saque', value: 'WITHDRAW' },
-  { label: 'Compra', value: 'COMPRA' },
-  { label: 'Venda', value: 'VENDA' },
+  { label: 'Todos',    value: 'all',     match: null },
+  { label: 'Depósito', value: 'DEPOSIT', match: ['DEPOSIT'] },
+  { label: 'Saque',    value: 'WITHDRAW', match: ['WITHDRAW'] },
+  { label: 'Compra',   value: 'BUY',     match: ['BUY', 'COMPRA'] },
+  { label: 'Venda',    value: 'SELL',    match: ['SELL', 'VENDA'] },
 ];
 
 const PERIOD_FILTERS = [
@@ -74,8 +78,9 @@ export default function HistoricoPage() {
 
   const filtered = useMemo(() => {
     const cutoff = periodDays ? new Date(Date.now() - periodDays * 86400000) : null;
+    const activeFilter = TYPE_FILTERS.find(f => f.value === typeFilter);
     return transactions.filter(tx => {
-      if (typeFilter !== 'all' && (tx.type ?? '').toUpperCase() !== typeFilter) return false;
+      if (activeFilter?.match && !activeFilter.match.includes((tx.type ?? '').toUpperCase())) return false;
       if (cutoff) {
         const d = new Date(tx.date ?? tx.createdAt);
         if (!isNaN(d) && d < cutoff) return false;
